@@ -1,6 +1,13 @@
 function parseLinear(eq) {
     eq = eq.replace(/\s+/g, '');
-    const parts = eq.split('=');
+    let operator = '=';
+    let parts;
+    if (eq.includes('<=')) { operator = '<='; parts = eq.split('<='); }
+    else if (eq.includes('>=')) { operator = '>='; parts = eq.split('>='); }
+    else if (eq.includes('<')) { operator = '<'; parts = eq.split('<'); }
+    else if (eq.includes('>')) { operator = '>'; parts = eq.split('>'); }
+    else { parts = eq.split('='); }
+
     let A = 0, B = 0, C = 0;
 
     function parseSide(sideStr, signMultiplier) {
@@ -29,7 +36,64 @@ function parseLinear(eq) {
     if (parts.length > 1) {
         parseSide(parts[1], -1);
     }
-    return { A, B, C };
+    return { A, B, C, op: operator }; // Ax + By + C (op) 0
+}
+
+function hexToRgba(hex, alpha) {
+    let r = parseInt(hex.slice(1, 3), 16),
+        g = parseInt(hex.slice(3, 5), 16),
+        b = parseInt(hex.slice(5, 7), 16);
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
+function getShadedPolygon(minX, maxX, minY, maxY, A, B, C, op) {
+    function evalF(x, y) { return A * x + B * y + C; }
+    function isValid(val) {
+        // Since we parsed terms onto the left side, the expression is: f(x) (op) 0
+        if (op === '<' || op === '<=') return val <= 1e-10;
+        if (op === '>' || op === '>=') return val >= -1e-10;
+        return false;
+    }
+
+    const corners = [
+        { x: minX, y: maxY },
+        { x: maxX, y: maxY },
+        { x: maxX, y: minY },
+        { x: minX, y: minY }
+    ];
+
+    let points = [];
+    corners.forEach(c => {
+        if (isValid(evalF(c.x, c.y))) points.push(c);
+    });
+
+    if (Math.abs(A) > 1e-10) {
+        let xTop = -(B * maxY + C) / A;
+        if (xTop >= minX && xTop <= maxX) points.push({ x: xTop, y: maxY });
+        let xBot = -(B * minY + C) / A;
+        if (xBot >= minX && xBot <= maxX) points.push({ x: xBot, y: minY });
+    }
+    if (Math.abs(B) > 1e-10) {
+        let yLeft = -(A * minX + C) / B;
+        if (yLeft >= minY && yLeft <= maxY) points.push({ x: minX, y: yLeft });
+        let yRight = -(A * maxX + C) / B;
+        if (yRight >= minY && yRight <= maxY) points.push({ x: maxX, y: yRight });
+    }
+
+    if (points.length < 3) return null;
+
+    points = points.filter((p, index, self) =>
+        index === self.findIndex(t => Math.abs(t.x - p.x) < 1e-10 && Math.abs(t.y - p.y) < 1e-10)
+    );
+
+    const cx = points.reduce((sum, p) => sum + p.x, 0) / points.length;
+    const cy = points.reduce((sum, p) => sum + p.y, 0) / points.length;
+
+    points.sort((a, b) => {
+        return Math.atan2(a.y - cy, a.x - cx) - Math.atan2(b.y - cy, b.x - cx);
+    });
+
+    return points;
 }
 
 class GraphViewer {
@@ -186,7 +250,6 @@ class GraphViewer {
             if (Math.abs(y) > 1e-10) {
                 const originX = this.mathXToScreenWidth(0);
                 const sx = Math.max(20, Math.min(originX, w));
-                // Align left if origin is off-screen left
                 if (originX < 0) {
                     ctx.textAlign = 'left';
                     ctx.fillText(parseFloat(y.toPrecision(4)), 5, sy);
@@ -204,11 +267,38 @@ class GraphViewer {
         ctx.textBaseline = 'top';
         ctx.fillText('0', Math.max(5, Math.min(this.mathXToScreenWidth(0) - 5, w - 5)), Math.max(5, Math.min(this.mathYToScreenHeight(0) + 5, h - 20)));
 
+        // Draw shaded regions for inequalities
+        this.equations.forEach(eq => {
+            if (eq.obj.op !== '=') {
+                const poly = getShadedPolygon(minMathX, maxMathX, minMathY, maxMathY, eq.obj.A, eq.obj.B, eq.obj.C, eq.obj.op);
+                if (poly && poly.length > 2) {
+                    ctx.fillStyle = hexToRgba(eq.color, 0.15); // Semi-transparent overlay
+                    ctx.beginPath();
+                    poly.forEach((p, idx) => {
+                        const px = this.mathXToScreenWidth(p.x);
+                        const py = this.mathYToScreenHeight(p.y);
+                        if (idx === 0) ctx.moveTo(px, py);
+                        else ctx.lineTo(px, py);
+                    });
+                    ctx.closePath();
+                    ctx.fill();
+                }
+            }
+        });
+
+        // Draw exact lines
         ctx.lineWidth = 2;
         this.equations.forEach(eq => {
+            const { A, B, C, op } = eq.obj;
+            // Draw dashed line if strictly less or strictly greater
+            if (op === '<' || op === '>') {
+                ctx.setLineDash([8, 6]); // Dashed
+            } else {
+                ctx.setLineDash([]); // Solid
+            }
+
             ctx.strokeStyle = eq.color;
             ctx.beginPath();
-            const { A, B, C } = eq.obj;
 
             if (Math.abs(B) < 1e-10) {
                 if (Math.abs(A) > 1e-10) {
@@ -224,6 +314,60 @@ class GraphViewer {
                 ctx.lineTo(w, this.mathYToScreenHeight(y1));
             }
             ctx.stroke();
+            ctx.setLineDash([]); // reset immediately just in case
+        });
+
+        // Compute and draw intersections
+        let intersections = [];
+        for (let i = 0; i < this.equations.length; i++) {
+            for (let j = i + 1; j < this.equations.length; j++) {
+                let eq1 = this.equations[i].obj;
+                let eq2 = this.equations[j].obj;
+
+                // Determinant of Cramer's rule: A1 x + B1 y = -C1, A2 x + B2 y = -C2
+                // Det = A1*B2 - A2*B1
+                let det = eq1.A * eq2.B - eq2.A * eq1.B;
+                if (Math.abs(det) > 1e-10) {
+                    let x = (eq1.B * eq2.C - eq2.B * eq1.C) / det;
+                    let y = (eq1.C * eq2.A - eq2.C * eq1.A) / det;
+
+                    // Keep track of which equations formulated this intersect to color code? Using primary colors.
+                    intersections.push({ x, y });
+                }
+            }
+        }
+
+        // Remove duplicate close intersections if multiple lines hit the same spot
+        intersections = intersections.filter((p, index, self) =>
+            index === self.findIndex(t => Math.abs(t.x - p.x) < 1e-6 && Math.abs(t.y - p.y) < 1e-6)
+        );
+
+        // Draw intersection markers
+        ctx.fillStyle = '#f8fafc';
+        ctx.strokeStyle = '#0f172a';
+        ctx.font = '13px Inter';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'bottom';
+        intersections.forEach(p => {
+            let sx = this.mathXToScreenWidth(p.x);
+            let sy = this.mathYToScreenHeight(p.y);
+            if (sx >= -10 && sx <= w + 10 && sy >= -10 && sy <= h + 10) {
+                // Dot
+                ctx.beginPath();
+                ctx.arc(sx, sy, 5, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.lineWidth = 1.5;
+                ctx.stroke();
+
+                // Coordinates Text Box for better readability
+                const text = `(${p.x.toFixed(2)}, ${p.y.toFixed(2)})`;
+                const textWidth = ctx.measureText(text).width;
+                ctx.fillStyle = 'rgba(15, 23, 42, 0.75)'; // Dark backdrop
+                ctx.fillRect(sx + 8, sy - 28, textWidth + 8, 20); // x, y, width, height
+                ctx.fillStyle = '#f8fafc';
+                ctx.fillText(text, sx + 12, sy - 12); // Slightly offset from dot
+                ctx.fillStyle = '#f8fafc'; // Reset dot fill color for next iteration
+            }
         });
     }
 
@@ -240,7 +384,7 @@ class GraphViewer {
             this.draw();
             return eqData;
         } catch (e) {
-            alert('解析方程式時發生錯誤，請確認格式（例如：2x+3y=6）');
+            alert('解析方程式時發生錯誤，請確認格式（例如：2x+3y <= 6）');
             return null;
         }
     }
@@ -278,12 +422,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 graphViewer = new GraphViewer('graph-canvas');
                 graphViewer.resize();
 
-                // Setup Zoom controls
                 document.getElementById('zoom-in').addEventListener('click', () => graphViewer.zoom(1.2));
                 document.getElementById('zoom-out').addEventListener('click', () => graphViewer.zoom(1 / 1.2));
                 document.getElementById('reset-view').addEventListener('click', () => graphViewer.resetView());
 
-                // Setup Input
                 const newEqInput = document.getElementById('new-eq-input');
                 const addEqBtn = document.getElementById('add-eq-btn');
                 const eqList = document.getElementById('eq-list');
