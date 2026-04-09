@@ -1,24 +1,57 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>歡迎體驗</title>
+    <title>教學工具集</title>
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
 </head>
+
 <body>
-    <div class="container">
-        <div id="input-section" class="card fade-in">
-            <h1>請輸入您的姓名</h1>
-            <input type="text" id="name-input" placeholder="例如：王小明" autocomplete="off" autofocus>
-            <button id="submit-btn" aria-label="確認送出">確認送出</button>
+    <div id="main-menu" class="container fade-in">
+        <div class="header">
+            <h1>教學工具集</h1>
+            <p style="color: var(--text-muted); margin-bottom: 30px;">探索互動式學習工具與視覺化介面</p>
         </div>
-        <div id="greeting-section" class="card fade-out" style="display: none;">
-            <h1 id="greeting-text">歡迎你</h1>
-            <button id="reset-btn" aria-label="重新輸入">重新輸入</button>
+        <div class="tool-grid">
+            <div class="card tool-card" id="btn-graphing">
+                <div class="tool-icon">📈</div>
+                <h2>畫圖工具</h2>
+                <p>輸入二元一次方程式，即時繪製平面圖形，支援自由縮放與拖曳。</p>
+            </div>
+            <!-- More tools can be added later here -->
         </div>
     </div>
+
+    <div id="graph-tool-view" class="tool-view hidden" style="display: none;">
+        <div class="toolbar">
+            <button id="back-btn" class="icon-btn" aria-label="返回">← 返回選單</button>
+            <h2>畫圖工具 (Graphing Calculator)</h2>
+            <div class="zoom-controls">
+                <button id="zoom-in" class="icon-btn" title="放大">➕ 放大</button>
+                <button id="zoom-out" class="icon-btn" title="縮小">➖ 縮小</button>
+                <button id="reset-view" class="icon-btn" title="重置畫面">🏠 重置</button>
+            </div>
+        </div>
+
+        <div class="graph-layout">
+            <div class="sidebar card">
+                <h3>方程式清單</h3>
+                <div class="eq-input-group">
+                    <input type="text" id="new-eq-input" placeholder="例如: 2x + 3y = 6">
+                    <button id="add-eq-btn">加入</button>
+                </div>
+                <ul id="eq-list"></ul>
+            </div>
+            <div class="canvas-container card">
+                <canvas id="graph-canvas"></canvas>
+            </div>
+        </div>
+    </div>
+
     <script src="script.js"></script>
 </body>
+
 </html>
