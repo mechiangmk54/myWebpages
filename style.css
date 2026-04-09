@@ -38,6 +38,7 @@ body {
     margin-bottom: 10px;
     background: linear-gradient(135deg, #a5b4fc, #818cf8, #c084fc);
     -webkit-background-clip: text;
+    background-clip: text;
     -webkit-text-fill-color: transparent;
 }
 
@@ -221,6 +222,91 @@ canvas {
     display: block;
     width: 100%;
     height: 100%;
+}
+
+/* Proportions Layout */
+.prop-layout {
+    display: flex;
+    flex: 1;
+    gap: 20px;
+    min-height: 0;
+}
+
+.prop-half {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+    background: var(--card-bg);
+}
+
+.prop-header {
+    text-align: left;
+    margin-bottom: 15px;
+}
+
+.prop-header h3 {
+    color: #a5b4fc;
+    margin-bottom: 5px;
+    font-size: 1.25rem;
+}
+
+.prop-content {
+    display: flex;
+    flex: 1;
+    gap: 15px;
+    min-height: 0;
+}
+
+.prop-table-container {
+    width: 140px;
+    overflow-y: auto;
+}
+
+.prop-canvas-container {
+    flex: 1;
+    position: relative;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    background: rgba(15, 23, 42, 0.4);
+    overflow: hidden;
+}
+
+.prop-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.prop-table th,
+.prop-table td {
+    padding: 8px;
+    text-align: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    font-size: 0.95rem;
+}
+
+.prop-table th {
+    font-weight: 600;
+    color: #94a3b8;
+}
+
+.table-input {
+    width: 100%;
+    padding: 6px;
+    margin-bottom: 0;
+    text-align: center;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid transparent;
+    border-radius: 4px;
+    color: white;
+    font-size: 0.95rem;
+    transition: all 0.2s;
+}
+
+.table-input:focus {
+    border-color: var(--primary-color);
+    box-shadow: none;
+    background: rgba(255, 255, 255, 0.1);
 }
 
 /* Animations */

@@ -415,6 +415,121 @@ class GraphViewer {
     }
 }
 
+class ProportionsViewer {
+    constructor(canvasId, type) {
+        this.canvas = document.getElementById(canvasId);
+        this.ctx = this.canvas.getContext('2d');
+        this.type = type; // 'direct' or 'inverse'
+        this.dataPoints = [];
+
+        // Settings based on type
+        if (this.type === 'direct') {
+            this.minX = 0; this.maxX = 12;
+            this.minY = 0; this.maxY = 120;
+        } else {
+            this.minX = 0; this.maxX = 35;
+            this.minY = 0; this.maxY = 35;
+        }
+
+        window.addEventListener('resize', () => this.resize());
+    }
+
+    resize() {
+        const rect = this.canvas.parentElement.getBoundingClientRect();
+        this.canvas.width = rect.width;
+        this.canvas.height = rect.height;
+        this.draw();
+    }
+
+    setData(points) {
+        this.dataPoints = points;
+        this.draw();
+    }
+
+    mXtoS(x) {
+        const pad = 30;
+        const w = this.canvas.width - pad * 2;
+        return pad + (x / this.maxX) * w;
+    }
+
+    mYtoS(y) {
+        const pad = 30;
+        const h = this.canvas.height - pad * 2;
+        return this.canvas.height - pad - (y / this.maxY) * h;
+    }
+
+    draw() {
+        const ctx = this.ctx;
+        const w = this.canvas.width;
+        const h = this.canvas.height;
+        ctx.clearRect(0, 0, w, h);
+
+        const pad = 30;
+
+        // Draw Axes & Labels
+        ctx.strokeStyle = '#cbd5e1';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(pad, pad); // Y axis top
+        ctx.lineTo(pad, h - pad); // Y axis bot
+        ctx.lineTo(w - pad, h - pad); // X axis right
+        ctx.stroke();
+
+        ctx.fillStyle = '#94a3b8';
+        ctx.font = '12px Inter';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'top';
+        ctx.fillText('0', pad - 10, h - pad + 5);
+
+        // Draw Math Curve
+        ctx.strokeStyle = this.type === 'direct' ? '#3b82f6' : '#10b981';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        if (this.type === 'direct') {
+            ctx.moveTo(this.mXtoS(0), this.mYtoS(0));
+            ctx.lineTo(this.mXtoS(this.maxX), this.mYtoS(this.maxX * 10));
+        } else {
+            let first = true;
+            for (let x = 0.5; x <= this.maxX; x += 0.5) {
+                let y = 120 / x;
+                if (y <= this.maxY + 10) {
+                    const sx = this.mXtoS(x);
+                    const sy = this.mYtoS(y);
+                    if (first) { ctx.moveTo(sx, sy); first = false; }
+                    else { ctx.lineTo(sx, sy); }
+                }
+            }
+        }
+        ctx.stroke();
+
+        // Draw Dots
+        ctx.fillStyle = '#f8fafc';
+        ctx.strokeStyle = '#0f172a';
+        ctx.lineWidth = 1.5;
+        this.dataPoints.forEach(p => {
+            if (p.x > 0 && p.x <= this.maxX && p.y > 0 && p.y <= this.maxY) {
+                const sx = this.mXtoS(p.x);
+                const sy = this.mYtoS(p.y);
+
+                ctx.beginPath();
+                ctx.arc(sx, sy, 5, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.stroke();
+
+                ctx.fillStyle = 'rgba(15, 23, 42, 0.75)';
+                const txt = `(${p.x}, ${p.y})`;
+                const tw = ctx.measureText(txt).width;
+                ctx.fillRect(sx, sy - 25, tw + 10, 20);
+
+                ctx.fillStyle = '#f8fafc';
+                ctx.textAlign = 'left';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(txt, sx + 5, sy - 15);
+            }
+        });
+    }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     const mainMenu = document.getElementById('main-menu');
     const graphToolView = document.getElementById('graph-tool-view');
@@ -483,5 +598,66 @@ document.addEventListener('DOMContentLoaded', () => {
 
     backBtn.addEventListener('click', () => {
         animateTransition(graphToolView, mainMenu);
+    });
+
+    // Proportions Logic Integration
+    const btnProportions = document.getElementById('btn-proportions');
+    const proportionsToolView = document.getElementById('proportions-tool-view');
+    const propBackBtn = document.getElementById('prop-back-btn');
+
+    let propDirectViewer = null;
+    let propInverseViewer = null;
+
+    function initProportionsTable(tableId, initialX, type, viewer) {
+        const tbody = document.querySelector(`#${tableId} tbody`);
+        tbody.innerHTML = '';
+
+        const updateAll = () => {
+            const points = [];
+            tbody.querySelectorAll('tr').forEach(tr => {
+                const input = tr.querySelector('.table-input');
+                const yCell = tr.querySelector('.y-val');
+                let x = parseFloat(input.value);
+                if (isNaN(x) || x <= 0) {
+                    yCell.textContent = '-';
+                } else {
+                    let y = type === 'direct' ? x * 10 : 120 / x;
+                    y = parseFloat(y.toFixed(2));
+                    yCell.textContent = y;
+                    points.push({ x, y });
+                }
+            });
+            viewer.setData(points);
+        };
+
+        initialX.forEach(x => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td><input type="number" class="table-input" value="${x}" step="any" min="0"></td>
+                <td class="y-val"></td>
+            `;
+            tr.querySelector('input').addEventListener('input', updateAll);
+            tbody.appendChild(tr);
+        });
+
+        updateAll();
+    }
+
+    btnProportions.addEventListener('click', () => {
+        animateTransition(mainMenu, proportionsToolView, () => {
+            if (!propDirectViewer) {
+                propDirectViewer = new ProportionsViewer('direct-canvas', 'direct');
+                propInverseViewer = new ProportionsViewer('inverse-canvas', 'inverse');
+
+                initProportionsTable('direct-table', [1, 2, 3, 5, 10], 'direct', propDirectViewer);
+                initProportionsTable('inverse-table', [5, 8, 12, 20, 30], 'inverse', propInverseViewer);
+            }
+            propDirectViewer.resize();
+            propInverseViewer.resize();
+        });
+    });
+
+    propBackBtn.addEventListener('click', () => {
+        animateTransition(proportionsToolView, mainMenu);
     });
 });

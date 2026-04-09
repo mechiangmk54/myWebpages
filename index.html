@@ -21,7 +21,11 @@
                 <h2>畫圖工具</h2>
                 <p>畫圖功能支援二元一次方程式及不等式。</p>
             </div>
-            <!-- More tools can be added later here -->
+            <div class="card tool-card" id="btn-proportions">
+                <div class="tool-icon">⚖️</div>
+                <h2>圖示正比與反比</h2>
+                <p>正比與反比關係的圖形對照與互動表格。</p>
+            </div>
         </div>
     </div>
 
@@ -47,6 +51,62 @@
             </div>
             <div class="canvas-container card">
                 <canvas id="graph-canvas"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div id="proportions-tool-view" class="tool-view hidden" style="display: none;">
+        <div class="toolbar">
+            <button id="prop-back-btn" class="icon-btn" aria-label="返回">← 返回選單</button>
+            <h2>圖示正比與反比</h2>
+            <div style="width: 80px;"></div>
+        </div>
+
+        <div class="prop-layout">
+            <div class="prop-half card">
+                <div class="prop-header">
+                    <h3>【正比】鉛筆總價問題</h3>
+                    <p style="color: var(--text-muted); font-size: 0.9em;">一支鉛筆 10 元，X 支鉛筆總共 Y 元。</p>
+                </div>
+                <div class="prop-content">
+                    <div class="prop-table-container">
+                        <table class="prop-table" id="direct-table">
+                            <thead>
+                                <tr>
+                                    <th>X (支)</th>
+                                    <th>Y (元)</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                    <div class="prop-canvas-container">
+                        <canvas id="direct-canvas"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="prop-half card">
+                <div class="prop-header">
+                    <h3>【反比】土地面積問題</h3>
+                    <p style="color: var(--text-muted); font-size: 0.9em;">一塊土地面積總共是 120 平方公尺，長度是 X 公尺，寬度是 Y 公尺。</p>
+                </div>
+                <div class="prop-content">
+                    <div class="prop-table-container">
+                        <table class="prop-table" id="inverse-table">
+                            <thead>
+                                <tr>
+                                    <th>X (公尺)</th>
+                                    <th>Y (公尺)</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                    <div class="prop-canvas-container">
+                        <canvas id="inverse-canvas"></canvas>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
