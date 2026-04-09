@@ -46,6 +46,26 @@ function hexToRgba(hex, alpha) {
     return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
 
+function toFraction(val, tolerance = 1e-5) {
+    if (Math.abs(val - Math.round(val)) < tolerance) return Math.round(val).toString();
+
+    let sign = val < 0 ? -1 : 1;
+    val = Math.abs(val);
+
+    let h1 = 1, h2 = 0, k1 = 0, k2 = 1;
+    let b = val;
+    do {
+        let a = Math.floor(b);
+        let aux = h1; h1 = a * h1 + h2; h2 = aux;
+        aux = k1; k1 = a * k1 + k2; k2 = aux;
+        b = 1 / (b - a);
+    } while (Math.abs(val - h1 / k1) > val * tolerance && k1 < 1000);
+
+    if (k1 > 1000) return (sign * val).toFixed(2);
+    if (k1 === 1) return (sign * h1).toString();
+    return (sign * h1) + '/' + k1;
+}
+
 function getShadedPolygon(minX, maxX, minY, maxY, A, B, C, op) {
     function evalF(x, y) { return A * x + B * y + C; }
     function isValid(val) {
@@ -360,7 +380,7 @@ class GraphViewer {
                 ctx.stroke();
 
                 // Coordinates Text Box for better readability
-                const text = `(${p.x.toFixed(2)}, ${p.y.toFixed(2)})`;
+                const text = `(${toFraction(p.x)}, ${toFraction(p.y)})`;
                 const textWidth = ctx.measureText(text).width;
                 ctx.fillStyle = 'rgba(15, 23, 42, 0.75)'; // Dark backdrop
                 ctx.fillRect(sx + 8, sy - 28, textWidth + 8, 20); // x, y, width, height
@@ -409,7 +429,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         setTimeout(() => {
             hideEl.style.display = 'none';
-            showEl.style.display = showEl.id === 'main-menu' ? 'flex' : 'flex';
+            showEl.style.display = '';
             showEl.classList.remove('fade-out', 'hidden');
             showEl.classList.add('fade-in');
             if (onComplete) onComplete();
