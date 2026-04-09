@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>歡迎體驗</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <div id="input-section" class="card fade-in">
+            <h1>請輸入您的姓名</h1>
+            <input type="text" id="name-input" placeholder="例如：王小明" autocomplete="off" autofocus>
+            <button id="submit-btn" aria-label="確認送出">確認送出</button>
+        </div>
+        <div id="greeting-section" class="card fade-out" style="display: none;">
+            <h1 id="greeting-text">歡迎你</h1>
+            <button id="reset-btn" aria-label="重新輸入">重新輸入</button>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
