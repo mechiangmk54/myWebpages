@@ -617,13 +617,18 @@ document.addEventListener('DOMContentLoaded', () => {
             tbody.querySelectorAll('tr').forEach(tr => {
                 const input = tr.querySelector('.table-input');
                 const yCell = tr.querySelector('.y-val');
+                const xyCell = tr.querySelector('.xy-val');
                 let x = parseFloat(input.value);
                 if (isNaN(x) || x <= 0) {
                     yCell.textContent = '-';
+                    if (xyCell) xyCell.textContent = '-';
                 } else {
                     let y = type === 'direct' ? x * 10 : 120 / x;
                     y = parseFloat(y.toFixed(2));
                     yCell.textContent = y;
+                    if (xyCell) {
+                        xyCell.textContent = Math.round(x * (120 / x)); // Should always equate to 120 mathematically
+                    }
                     points.push({ x, y });
                 }
             });
@@ -632,10 +637,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
         initialX.forEach(x => {
             const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td><input type="number" class="table-input" value="${x}" step="any" min="0"></td>
-                <td class="y-val"></td>
-            `;
+            if (type === 'inverse') {
+                tr.innerHTML = `
+                    <td><input type="number" class="table-input" value="${x}" step="any" min="0"></td>
+                    <td class="y-val"></td>
+                    <td class="xy-val" style="color: #10b981; font-weight: 600;"></td>
+                `;
+            } else {
+                tr.innerHTML = `
+                    <td><input type="number" class="table-input" value="${x}" step="any" min="0"></td>
+                    <td class="y-val"></td>
+                `;
+            }
             tr.querySelector('input').addEventListener('input', updateAll);
             tbody.appendChild(tr);
         });

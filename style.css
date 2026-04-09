@@ -259,7 +259,7 @@ canvas {
 }
 
 .prop-table-container {
-    width: 140px;
+    min-width: 170px;
     overflow-y: auto;
 }
 
