@@ -530,7 +530,91 @@ class ProportionsViewer {
     }
 }
 
+class Whiteboard {
+    constructor() {
+        this.canvas = document.getElementById('whiteboard-canvas');
+        this.ctx = this.canvas.getContext('2d');
+        this.controls = document.getElementById('whiteboard-controls');
+        this.isActive = false;
+        this.isDrawing = false;
+        this.color = '#ef4444'; // default red
+
+        if (!this.canvas) return;
+
+        this.resize();
+        window.addEventListener('resize', () => this.resize());
+        this.initEvents();
+    }
+
+    resize() {
+        this.canvas.width = window.innerWidth;
+        this.canvas.height = window.innerHeight;
+    }
+
+    clear() {
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    }
+
+    toggle() {
+        this.isActive = !this.isActive;
+        if (this.isActive) {
+            this.canvas.classList.add('active');
+            this.controls.style.display = 'flex';
+        } else {
+            this.canvas.classList.remove('active');
+            this.controls.style.display = 'none';
+        }
+    }
+
+    deactivate() {
+        if (this.isActive) this.toggle();
+    }
+
+    initEvents() {
+        document.querySelectorAll('.toggle-wb-btn').forEach(btn => {
+            btn.addEventListener('click', () => this.toggle());
+        });
+
+        document.getElementById('wb-close').addEventListener('click', () => this.toggle());
+        document.getElementById('wb-clear').addEventListener('click', () => this.clear());
+
+        const colorBtns = document.querySelectorAll('.color-btn');
+        colorBtns.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                this.color = e.target.dataset.color;
+                colorBtns.forEach(b => b.classList.remove('selected'));
+                e.target.classList.add('selected');
+            });
+        });
+        if (colorBtns.length > 0) colorBtns[0].classList.add('selected');
+
+        this.canvas.addEventListener('mousedown', e => {
+            if (!this.isActive) return;
+            this.isDrawing = true;
+            this.ctx.beginPath();
+            this.ctx.moveTo(e.clientX, e.clientY);
+        });
+        window.addEventListener('mouseup', () => {
+            this.isDrawing = false;
+            this.ctx.beginPath();
+        });
+        window.addEventListener('mousemove', e => {
+            if (!this.isDrawing || !this.isActive) return;
+            this.ctx.lineWidth = 4;
+            this.ctx.lineCap = 'round';
+            this.ctx.lineJoin = 'round';
+            this.ctx.strokeStyle = this.color;
+            this.ctx.lineTo(e.clientX, e.clientY);
+            this.ctx.stroke();
+            this.ctx.beginPath();
+            this.ctx.moveTo(e.clientX, e.clientY);
+        });
+    }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
+    const wb = new Whiteboard();
+
     const mainMenu = document.getElementById('main-menu');
     const graphToolView = document.getElementById('graph-tool-view');
     const btnGraphing = document.getElementById('btn-graphing');
@@ -597,6 +681,8 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     backBtn.addEventListener('click', () => {
+        if (wb) wb.deactivate();
+        if (wb) wb.clear();
         animateTransition(graphToolView, mainMenu);
     });
 
@@ -671,6 +757,8 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     propBackBtn.addEventListener('click', () => {
+        if (wb) wb.deactivate();
+        if (wb) wb.clear();
         animateTransition(proportionsToolView, mainMenu);
     });
 });
