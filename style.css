@@ -444,6 +444,19 @@ canvas {
         width: 100%;
     }
 
+    .prop-content {
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .prop-canvas-container {
+        min-height: 250px;
+    }
+
+    .prop-table-container {
+        width: 100%;
+    }
+
     .prop-view-container {
         min-height: 300px;
     }
