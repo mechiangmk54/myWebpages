@@ -386,6 +386,17 @@ canvas {
 }
 
 @media (max-width: 768px) {
+    body {
+        overflow-y: auto;
+        align-items: flex-start;
+        padding-top: 10px;
+    }
+
+    .tool-view {
+        height: auto;
+        min-height: 100vh;
+    }
+
     .container {
         padding: 10px;
     }
