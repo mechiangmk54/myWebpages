@@ -95,6 +95,8 @@ body {
 }
 
 .icon-btn {
+    width: auto;
+    white-space: nowrap;
     padding: 10px 15px;
     border-radius: 8px;
     border: none;
@@ -402,6 +404,21 @@ canvas {
         max-width: 320px;
     }
 
+    .toolbar {
+        flex-direction: column;
+        gap: 15px;
+        text-align: center;
+    }
+
+    .toolbar h2 {
+        font-size: 1.2rem;
+    }
+
+    .zoom-controls {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
     .graph-layout {
         flex-direction: column;
         height: auto;
@@ -433,9 +450,10 @@ canvas {
 
     #whiteboard-controls {
         flex-wrap: wrap;
-        width: 90%;
+        width: 95%;
         justify-content: center;
         border-radius: 16px;
+        padding: 10px;
     }
 }
 
