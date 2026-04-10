@@ -449,11 +449,18 @@ canvas {
     }
 
     #whiteboard-controls {
-        flex-wrap: wrap;
-        width: 95%;
-        justify-content: center;
+        flex-direction: column;
+        gap: 15px;
+        left: 10px;
+        right: 10px;
+        width: auto;
+        transform: none;
         border-radius: 16px;
-        padding: 10px;
+        padding: 15px;
+    }
+
+    .wb-divider {
+        display: none !important;
     }
 }
 
