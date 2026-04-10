@@ -539,6 +539,9 @@ class Whiteboard {
         this.isDrawing = false;
         this.color = '#ef4444'; // default red
 
+        this.history = [];
+        this.maxHistory = 5;
+
         if (!this.canvas) return;
 
         this.resize();
@@ -549,9 +552,25 @@ class Whiteboard {
     resize() {
         this.canvas.width = window.innerWidth;
         this.canvas.height = window.innerHeight;
+        this.history = [];
+    }
+
+    saveState() {
+        if (this.history.length >= this.maxHistory) {
+            this.history.shift();
+        }
+        this.history.push(this.ctx.getImageData(0, 0, this.canvas.width, this.canvas.height));
+    }
+
+    undo() {
+        if (this.history.length > 0) {
+            const prevState = this.history.pop();
+            this.ctx.putImageData(prevState, 0, 0);
+        }
     }
 
     clear() {
+        if (this.isActive) this.saveState();
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     }
 
@@ -577,6 +596,7 @@ class Whiteboard {
 
         document.getElementById('wb-close').addEventListener('click', () => this.toggle());
         document.getElementById('wb-clear').addEventListener('click', () => this.clear());
+        document.getElementById('wb-undo').addEventListener('click', () => this.undo());
 
         const colorBtns = document.querySelectorAll('.color-btn');
         colorBtns.forEach(btn => {
@@ -591,6 +611,7 @@ class Whiteboard {
         this.canvas.addEventListener('mousedown', e => {
             if (!this.isActive) return;
             this.isDrawing = true;
+            this.saveState();
             this.ctx.beginPath();
             this.ctx.moveTo(e.clientX, e.clientY);
         });
