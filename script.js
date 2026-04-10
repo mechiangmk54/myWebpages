@@ -200,6 +200,35 @@ class GraphViewer {
             this.draw();
         });
 
+        this.canvas.addEventListener('touchstart', e => {
+            const wbCanvas = document.getElementById('whiteboard-canvas');
+            if (wbCanvas && wbCanvas.classList.contains('active')) return;
+            if (e.touches.length === 1) {
+                e.preventDefault();
+                this.isDragging = true;
+                this.lastMouseX = e.touches[0].clientX;
+                this.lastMouseY = e.touches[0].clientY;
+            }
+        }, { passive: false });
+
+        window.addEventListener('touchend', () => {
+            this.isDragging = false;
+        });
+
+        window.addEventListener('touchmove', e => {
+            if (!this.isDragging || e.touches.length !== 1) return;
+            e.preventDefault();
+            const dx = e.touches[0].clientX - this.lastMouseX;
+            const dy = e.touches[0].clientY - this.lastMouseY;
+
+            this.offsetX -= dx / this.scale;
+            this.offsetY += dy / this.scale;
+
+            this.lastMouseX = e.touches[0].clientX;
+            this.lastMouseY = e.touches[0].clientY;
+            this.draw();
+        }, { passive: false });
+
         this.canvas.addEventListener('wheel', e => {
             e.preventDefault();
             this.zoom(e.deltaY < 0 ? 1.1 : 1 / 1.1, e);
@@ -615,21 +644,47 @@ class Whiteboard {
             this.ctx.beginPath();
             this.ctx.moveTo(e.clientX, e.clientY);
         });
+
+        this.canvas.addEventListener('touchstart', e => {
+            if (!this.isActive) return;
+            e.preventDefault();
+            this.isDrawing = true;
+            this.saveState();
+            this.ctx.beginPath();
+            this.ctx.moveTo(e.touches[0].clientX, e.touches[0].clientY);
+        }, { passive: false });
+
         window.addEventListener('mouseup', () => {
             this.isDrawing = false;
             this.ctx.beginPath();
         });
-        window.addEventListener('mousemove', e => {
-            if (!this.isDrawing || !this.isActive) return;
+
+        window.addEventListener('touchend', () => {
+            this.isDrawing = false;
+            this.ctx.beginPath();
+        });
+
+        const drawStroke = (x, y) => {
             this.ctx.lineWidth = 4;
             this.ctx.lineCap = 'round';
             this.ctx.lineJoin = 'round';
             this.ctx.strokeStyle = this.color;
-            this.ctx.lineTo(e.clientX, e.clientY);
+            this.ctx.lineTo(x, y);
             this.ctx.stroke();
             this.ctx.beginPath();
-            this.ctx.moveTo(e.clientX, e.clientY);
+            this.ctx.moveTo(x, y);
+        };
+
+        window.addEventListener('mousemove', e => {
+            if (!this.isDrawing || !this.isActive) return;
+            drawStroke(e.clientX, e.clientY);
         });
+
+        window.addEventListener('touchmove', e => {
+            if (!this.isDrawing || !this.isActive) return;
+            e.preventDefault();
+            drawStroke(e.touches[0].clientX, e.touches[0].clientY);
+        }, { passive: false });
     }
 }
 
