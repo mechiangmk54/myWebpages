@@ -395,14 +395,32 @@ canvas {
 
 @media (max-width: 768px) {
     body {
-        overflow-y: auto;
         align-items: flex-start;
-        padding-top: 10px;
+        padding-top: 0;
     }
 
     .tool-view {
-        height: auto;
-        min-height: 100vh;
+        height: 100vh;
+        width: 100vw;
+        padding: 0;
+    }
+
+    .toolbar {
+        flex-direction: column;
+        gap: 10px;
+        text-align: center;
+        padding: 10px;
+        margin-bottom: 10px;
+        border-radius: 0;
+    }
+
+    .toolbar h2 {
+        font-size: 1.2rem;
+    }
+
+    .zoom-controls {
+        flex-wrap: wrap;
+        justify-content: center;
     }
 
     .container {
@@ -423,26 +441,12 @@ canvas {
         max-width: 320px;
     }
 
-    .toolbar {
-        flex-direction: column;
-        gap: 15px;
-        text-align: center;
-        top: 5px;
-        padding: 15px;
-    }
-
-    .toolbar h2 {
-        font-size: 1.2rem;
-    }
-
-    .zoom-controls {
-        flex-wrap: wrap;
-        justify-content: center;
-    }
-
     .graph-layout {
         flex-direction: column;
-        height: auto;
+        flex: 1;
+        overflow-y: auto;
+        min-height: 0;
+        padding: 0 10px 20px 10px;
     }
 
     .graph-view-container {
@@ -458,7 +462,10 @@ canvas {
 
     .prop-layout {
         flex-direction: column;
-        height: auto;
+        flex: 1;
+        overflow-y: auto;
+        min-height: 0;
+        padding: 0 10px 20px 10px;
     }
 
     .prop-half {
